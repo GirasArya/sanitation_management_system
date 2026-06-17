@@ -11,14 +11,16 @@
     },
     "require": {
         "php": "^8.1",
-        "codeigniter4/framework": "^4.7.0",
         "ext-intl": "*",
         "ext-mbstring": "*",
+        "codeigniter4/framework": "^4.7.0",
+        "doctrine/annotations": "^2.0",
         "firebase/php-jwt": "^7.0",
         "laminas/laminas-escaper": "^2.17",
         "paragonie/sodium_compat": "^2.5",
         "phpoffice/phpspreadsheet": "^5.2",
-        "psr/log": "^3.0"
+        "psr/log": "^3.0",
+        "zircote/swagger-php": "^6.2"
     },
     "require-dev": {
         "codeigniter/coding-standard": "^1.7",

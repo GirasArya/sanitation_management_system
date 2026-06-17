@@ -13,12 +13,12 @@ services:
       CI_ENVIRONMENT: ${CI_ENVIRONMENT}
       APP_BASE_URL: ${APP_BASE_URL}
       COOKIE_DOMAIN: ""
-      DB_HOST: ${DB_HOST:?DB_HOST cannot empty}
+      DB_HOST: ${DB_HOST}
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASS: ${DB_PASS}
       DB_DRIVER: Postgre
-      DB_PORT: 5432
+      DB_PORT: ${DB_PORT}
       CACHE_HANDLER: redis
       CACHE_BACKUP_HANDLER: file
       REDIS_HOST: ${REDIS_HOST}
@@ -29,6 +29,7 @@ services:
       SEED_FORCE: false
       SEEDER_CLASS: MainSeeder
     volumes:
+      - .:/var/www/html # live reload – remove in prod
       - app_writable:/var/www/html/writable
       - public_uploads:/var/www/html/public/uploads/revisions
     depends_on:
@@ -54,7 +55,7 @@ services:
     volumes:
       - db_data:/var/lib/postgresql
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U bionic_user -d bionic_db" ]
+      test: ["CMD-SHELL", "pg_isready -U bionic_user -d bionic_db"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -66,13 +67,13 @@ services:
     image: redis:alpine
     container_name: bionic_redis
     restart: unless-stopped
-    command: [ "redis-server", "--appendonly", "yes" ]
+    command: ["redis-server", "--appendonly", "yes"]
     expose:
       - 6379
     volumes:
       - redis_data:/data
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 10

@@ -1,10 +1,10 @@
 # Simple production Dockerfile for Bionic Cleaning Tracker backend
 # ------------------------------------------------------------
-# Uses the official PHP‑Apache image (PHP 8.3) and installs Composer.
+# Uses the official PHP‑Apache image (PHP 8.4) and installs Composer.
 # This matches the original Dockerfile behaviour but avoids a multi‑stage
 # build that caused long‑running apk installations.
 # ------------------------------------------------------------
-FROM php:8.3-apache-bookworm
+FROM php:8.4-apache-bookworm
 
 # -----------------------------------------------------------------
 # System dependencies – install only what the original Dockerfile needs
@@ -68,7 +68,7 @@ RUN mkdir -p writable/cache writable/logs writable/temp writable/uploads \
 # Entrypoint script (same as original repo)
 # -----------------------------------------------------------------
 COPY docker/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 
 EXPOSE 80
 ENTRYPOINT ["/entrypoint.sh"]
