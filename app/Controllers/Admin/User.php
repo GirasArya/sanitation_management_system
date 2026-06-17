@@ -4,6 +4,7 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Models\UserModel;
+use OpenApi\Attributes as OA;
 
 class User extends BaseController
 {
@@ -25,6 +26,29 @@ class User extends BaseController
         return view('admin/vw_manage_user', $sent_data);
     }
 
+    #[OA\Post(
+        path: '/admin/manage/user/modal',
+        summary: 'Get user modal HTML',
+        description: 'Returns the modal form HTML for add / edit / delete. Pass `type` = add | edit | delete and optionally `id` for edit/delete.',
+        tags: ['Admin'],
+        // security: [['sessionAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/x-www-form-urlencoded',
+                schema: new OA\Schema(
+                    properties: [
+                        new OA\Property(property: 'type', type: 'string', enum: ['add', 'edit', 'delete']),
+                        new OA\Property(property: 'id',   type: 'integer'),
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Modal HTML + status'),
+            new OA\Response(response: 404, description: 'User not found or invalid type', ref: '#/components/schemas/NotFoundResponse'),
+        ]
+    )]
     public function modal()
     {
         $id = $this->request->getVar('id');
@@ -86,6 +110,33 @@ class User extends BaseController
         }
     }
 
+    #[OA\Post(
+        path: '/admin/manage/user/get_datatable',
+        summary: 'User DataTable data',
+        description: 'Returns paginated, sorted, searchable user data for jQuery DataTables.',
+        tags: ['Admin'],
+        // security: [['sessionAuth' => []]],
+        requestBody: new OA\RequestBody(
+            content: new OA\MediaType(
+                mediaType: 'application/x-www-form-urlencoded',
+                schema: new OA\Schema(
+                    properties: [
+                        new OA\Property(property: 'draw',   type: 'integer'),
+                        new OA\Property(property: 'start',  type: 'integer'),
+                        new OA\Property(property: 'length', type: 'integer'),
+                        new OA\Property(property: 'search[value]', type: 'string'),
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'DataTable JSON',
+                content: new OA\JsonContent(ref: '#/components/schemas/DatatableResponse')
+            ),
+        ]
+    )]
     public function get_datatable()
     {
         $user = new UserModel();
@@ -110,6 +161,33 @@ class User extends BaseController
         return $this->response->setJSON($data);
     }
 
+    #[OA\Post(
+        path: '/admin/manage/user/add',
+        summary: 'Create a new user',
+        tags: ['Admin'],
+        security: [['sessionAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/x-www-form-urlencoded',
+                schema: new OA\Schema(
+                    required: ['name', 'user_role', 'username', 'password', 'password_confirm'],
+                    properties: [
+                        new OA\Property(property: 'name',             type: 'string',  example: 'Giras Arya'),
+                        new OA\Property(property: 'user_role',        type: 'string',  enum: ['operator', 'verifikator', 'administrator']),
+                        new OA\Property(property: 'username',         type: 'string',  example: 'Giras'),
+                        new OA\Property(property: 'password',         type: 'string',  format: 'password'),
+                        new OA\Property(property: 'password_confirm', type: 'string',  format: 'password'),
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(response: 201, description: 'User created', content: new OA\JsonContent(ref: '#/components/schemas/CreatedResponse')),
+            new OA\Response(response: 400, description: 'Validation error',  content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')),
+            new OA\Response(response: 500, description: 'Database error'),
+        ]
+    )]
     public function add()
     {
         $userModel = new UserModel();
@@ -174,6 +252,33 @@ class User extends BaseController
         ]);
     }
 
+    #[OA\Put(
+        path: '/admin/manage/user/edit',
+        summary: 'Update an existing user',
+        tags: ['Admin'],
+        security: [['sessionAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/x-www-form-urlencoded',
+                schema: new OA\Schema(
+                    required: ['id', 'name', 'user_role', 'username'],
+                    properties: [
+                        new OA\Property(property: 'id',        type: 'integer'),
+                        new OA\Property(property: 'name',      type: 'string'),
+                        new OA\Property(property: 'user_role', type: 'string', enum: ['operator', 'verifikator', 'administrator']),
+                        new OA\Property(property: 'username',  type: 'string'),
+                        new OA\Property(property: 'password',  type: 'string', format: 'password', description: 'Leave blank to keep existing password'),
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'User updated', content: new OA\JsonContent(ref: '#/components/schemas/SuccessResponse')),
+            new OA\Response(response: 400, description: 'Validation error',  content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')),
+            new OA\Response(response: 500, description: 'Database error'),
+        ]
+    )]
     public function update()
     {
         $id = $this->request->getVar('id');
@@ -232,6 +337,30 @@ class User extends BaseController
         ]);
     }
 
+    #[OA\Delete(
+        path: '/admin/manage/user/delete',
+        summary: 'Delete a user',
+        tags: ['Admin'],
+        security: [['sessionAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/x-www-form-urlencoded',
+                schema: new OA\Schema(
+                    required: ['id'],
+                    properties: [
+                        new OA\Property(property: 'id', type: 'integer'),
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'User deleted', content: new OA\JsonContent(ref: '#/components/schemas/SuccessResponse')),
+            new OA\Response(response: 400, description: 'Cannot delete own account'),
+            new OA\Response(response: 404, description: 'User not found',   content: new OA\JsonContent(ref: '#/components/schemas/NotFoundResponse')),
+            new OA\Response(response: 500, description: 'Database error'),
+        ]
+    )]
     public function delete()
     {
         $id = $this->request->getVar('id');

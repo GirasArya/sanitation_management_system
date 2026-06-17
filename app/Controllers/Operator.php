@@ -8,6 +8,7 @@ use App\Models\ItemModel;
 use App\Models\LocationModel;
 use App\Models\TaskSubmissionModel;
 use App\Models\TaskSubmissionDetailModel;
+use OpenApi\Attributes as OA;
 
 class Operator extends BaseController
 {
@@ -177,6 +178,46 @@ class Operator extends BaseController
     /**
      * Save task submission with error handling and validation
      */
+    #[OA\Post(
+        path: '/operator/add',
+        summary: 'Submit cleaning task(s)',
+        description: 'Saves one or more cleaning task submissions for a given location. Groups submissions by item and generates a unique batch code.',
+        tags: ['Operator'],
+        // security: [['sessionAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/x-www-form-urlencoded',
+                schema: new OA\Schema(
+                    required: ['user_id', 'submissions'],
+                    properties: [
+                        new OA\Property(property: 'user_id', type: 'integer', example: 2),
+                        new OA\Property(
+                            property: 'submissions',
+                            type: 'string',
+                            description: 'JSON array of submission objects',
+                            example: '[{"location_id":1,"item_id":3,"action_id":5,"date":"2026-06-17"}]'
+                        ),
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Submissions saved', content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'status', type: 'integer'),
+                    new OA\Property(property: 'message', type: 'string'),
+                    new OA\Property(property: 'unique_code', type: 'string')
+                ]
+            )),
+            new OA\Response(response: 400, description: 'Invalid input', content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'status', type: 'integer'),
+                    new OA\Property(property: 'message', type: 'string')
+                ]
+            )),
+        ]
+    )]
     public function add_submission()
     {
         $user_id = $this->request->getVar('user_id');
@@ -251,17 +292,17 @@ class Operator extends BaseController
                     }
                 }
 
-                    $resubmitData = ['status' => 'resubmitted'];
-                    if ($this->canUseRevisionImageColumn()) {
-                        $resubmitData['revision_image_path'] = null;
-                    }
+                $resubmitData = ['status' => 'resubmitted'];
+                if ($this->canUseRevisionImageColumn()) {
+                    $resubmitData['revision_image_path'] = null;
+                }
 
-                    $taskSubmissionModel->builder()
-                        ->where('location_id', $payload['location_id'])
-                        ->where('item_id', $payload['item_id'])
-                        ->where('date', $payload['date'])
-                        ->whereIn('status', ['revisi', 'revised'])
-                        ->update($resubmitData);
+                $taskSubmissionModel->builder()
+                    ->where('location_id', $payload['location_id'])
+                    ->where('item_id', $payload['item_id'])
+                    ->where('date', $payload['date'])
+                    ->whereIn('status', ['revisi', 'revised'])
+                    ->update($resubmitData);
 
                 $data = [
                     'date' => $payload['date'],
@@ -302,6 +343,30 @@ class Operator extends BaseController
     /**
      * Increment location visit count
      */
+    #[OA\Post(
+        path: '/operator/increment_visit/{location_id}',
+        summary: 'Record a room visit',
+        tags: ['Operator'],
+        security: [['sessionAuth' => []]],
+        parameters: [new OA\Parameter(name: 'location_id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
+        responses: [
+            new OA\Response(response: 200, description: 'Visit recorded', content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'status', type: 'string', example: "success"),
+                ]
+            )),
+            new OA\Response(response: 401, description: 'Unauthorized', content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'error', type: 'string', example: 'Unauthorized')
+                ]
+            )),
+            new OA\Response(response: 400, description: 'Unauthorized', content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'error', type: 'string', example: 'Invalid user')
+                ]
+            )),
+        ]
+    )]
     public function increment_visit($location_id)
     {
         $jwt = session()->get('jwt');
@@ -322,22 +387,40 @@ class Operator extends BaseController
     /**
      * Cancel task submission
      */
+    #[OA\Delete(
+        path: '/operator/cancel/{action_id}',
+        summary: 'Cancel a task submission',
+        tags: ['Operator'],
+        security: [['sessionAuth' => []]],
+        parameters: [new OA\Parameter(name: 'action_id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
+        responses: [
+            new OA\Response(response: 200, description: 'Submission cancelled', content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'status', type: 'string', example: 'Submission cancelled successfully'),
+                ]
+            )),
+            new OA\Response(response: 404, description: 'Not Found', content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'error', type: 'string', example: 'Invalid action_id')
+                ]
+            )),
+        ]
+    )]
     public function cancel_submission($action_id)
     {
         if (!$action_id) {
-            return;
+            return $this->response->setStatusCode(400)->setJSON(['error' => 'Invalid action_id']);
         }
 
         $taskSubmissionDetailModel = new TaskSubmissionDetailModel();
         $detail = $taskSubmissionDetailModel->where('action_id', $action_id)->first();
-
-        if (!$detail) {
-            return;
+        if ($detail) {
+            $taskSubmissionModel = new TaskSubmissionModel();
+            $taskSubmissionDetailModel->delete($detail['task_submission_detail_id']);
+            $taskSubmissionModel->delete($detail['task_submission_id']);
+            return $this->response->setStatusCode(200)->setJSON(['status' => 'success', 'message' => 'Submission cancelled successfully']);
         }
-
-        $taskSubmissionModel = new TaskSubmissionModel();
-        $taskSubmissionDetailModel->delete($detail['task_submission_detail_id']);
-        $taskSubmissionModel->delete($detail['task_submission_id']);
+        return $this->response->setStatusCode(404)->setJSON(['error' => 'Invalid action_id']);
     }
 
     /**
@@ -358,7 +441,8 @@ class Operator extends BaseController
         $revisionImageGroupBy = $hasRevisionImage ? ', rts.revision_image_path' : '';
 
         $revisedSubmissions = $db->table('r_task_submission AS rts')
-            ->select('
+            ->select(
+                '
                 rts.task_submission_id,
                 rts.date,
                 rts.location_id,

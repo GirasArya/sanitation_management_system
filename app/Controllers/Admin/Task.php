@@ -6,6 +6,7 @@ use App\Controllers\BaseController;
 use App\Models\ActionModel;
 use App\Models\ItemModel;
 use App\Models\LocationModel;
+use OpenApi\Attributes as OA;
 
 class Task extends BaseController
 {
@@ -87,6 +88,14 @@ class Task extends BaseController
         return view('admin/vw_manage_task_location', $sent_data);
     }
 
+    #[OA\Post(
+        path: '/admin/manage/task/get_datatable/location',
+        summary: 'Location DataTable data',
+        tags: ['Admin'],
+        // security: [['sessionAuth' => []]],
+        requestBody: new OA\RequestBody(content: new OA\MediaType(mediaType: 'application/x-www-form-urlencoded', schema: new OA\Schema(properties: [new OA\Property(property: 'draw', type: 'integer'), new OA\Property(property: 'start', type: 'integer'), new OA\Property(property: 'length', type: 'integer')]))),
+        responses: [new OA\Response(response: 200, description: 'DataTable JSON', content: new OA\JsonContent(ref: '#/components/schemas/DatatableResponse'))]
+    )]
     public function get_datatable_location()
     {
         $locationModel = new LocationModel();
@@ -95,6 +104,24 @@ class Task extends BaseController
         return $this->response->setJSON($result);
     }
 
+    #[OA\Post(
+        path: '/admin/manage/task/get_datatable/item',
+        summary: 'Item DataTable data',
+        tags: ['Admin'],
+        // security: [['sessionAuth' => []]],
+        requestBody: new OA\RequestBody(
+            content: new OA\MediaType(
+                mediaType: 'application/x-www-form-urlencoded',
+                schema: new OA\Schema(properties: [
+                    new OA\Property(property: 'location_id', type: 'integer'),
+                    new OA\Property(property: 'draw', type: 'integer'),
+                    new OA\Property(property: 'start', type: 'integer'),
+                    new OA\Property(property: 'length', type: 'integer')
+                ])
+            )
+        ),
+        responses: [new OA\Response(response: 200, description: 'DataTable JSON', content: new OA\JsonContent(ref: '#/components/schemas/DatatableResponse'))]
+    )]
     public function get_datatable_item()
     {
         $itemModel = new ItemModel();
@@ -103,6 +130,22 @@ class Task extends BaseController
         return $this->response->setJSON($result);
     }
 
+    #[OA\Post(
+        path: '/admin/manage/task/get_datatable/action',
+        summary: 'Action DataTable data',
+        tags: ['Admin'],
+        // security: [['sessionAuth' => []]], 
+        requestBody: new OA\RequestBody(content: new OA\MediaType(
+            mediaType: 'application/x-www-form-urlencoded',
+            schema: new OA\Schema(properties: [
+                new OA\Property(property: 'item_id', type: 'integer'),
+                new OA\Property(property: 'draw', type: 'integer'),
+                new OA\Property(property: 'start', type: 'integer'),
+                new OA\Property(property: 'length', type: 'integer')
+            ])
+        )),
+        responses: [new OA\Response(response: 200, description: 'DataTable JSON', content: new OA\JsonContent(ref: '#/components/schemas/DatatableResponse'))]
+    )]
     public function get_datatable_action()
     {
         $actionModel = new ActionModel();
@@ -252,6 +295,26 @@ class Task extends BaseController
         }
     }
 
+    #[OA\Post(
+        path: '/admin/manage/task/add/location',
+        summary: 'Add a new location (room)',
+        tags: ['Admin'],
+        // security: [['sessionAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/x-www-form-urlencoded',
+                schema: new OA\Schema(
+                    required: ['location'],
+                    properties: [new OA\Property(property: 'location', type: 'string', example: 'Ruang Rapat A')]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(response: 201, description: 'Location created', content: new OA\JsonContent(ref: '#/components/schemas/CreatedResponse')),
+            new OA\Response(response: 400, description: 'Validation error', content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')),
+        ]
+    )]
     public function add_location()
     {
         $locationModel = new LocationModel();
@@ -288,6 +351,29 @@ class Task extends BaseController
         ]);
     }
 
+    #[OA\Post(
+        path: '/admin/manage/task/add/item',
+        summary: 'Add an item to a location',
+        tags: ['Admin'],
+        // security: [['sessionAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/x-www-form-urlencoded',
+                schema: new OA\Schema(
+                    required: ['location_id', 'item'],
+                    properties: [
+                        new OA\Property(property: 'location_id', type: 'integer'),
+                        new OA\Property(property: 'item',        type: 'string', example: 'Meja'),
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(response: 201, description: 'Item created', content: new OA\JsonContent(ref: '#/components/schemas/CreatedResponse')),
+            new OA\Response(response: 400, description: 'Validation error', content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')),
+        ]
+    )]
     public function add_item()
     {
         $itemModel = new ItemModel();
@@ -338,6 +424,29 @@ class Task extends BaseController
         ]);
     }
 
+    #[OA\Post(
+        path: '/admin/manage/task/add/action',
+        summary: 'Add a cleaning action to an item',
+        tags: ['Admin'],
+        // security: [['sessionAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/x-www-form-urlencoded',
+                schema: new OA\Schema(
+                    required: ['item_id', 'aksi'],
+                    properties: [
+                        new OA\Property(property: 'item_id', type: 'integer'),
+                        new OA\Property(property: 'aksi',   type: 'string', example: 'Dilap'),
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(response: 201, description: 'Action created', content: new OA\JsonContent(ref: '#/components/schemas/CreatedResponse')),
+            new OA\Response(response: 400, description: 'Validation error', content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')),
+        ]
+    )]
     public function add_action()
     {
         $actionModel = new ActionModel();
@@ -373,6 +482,47 @@ class Task extends BaseController
         ]);
     }
 
+    #[OA\Put(
+        path: '/admin/manage/task/edit/location',
+        summary: 'Update a location name',
+        tags: ['Admin'],
+        // security: [['sessionAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/x-www-form-urlencoded',
+                schema: new OA\Schema(
+                    required: ['id', 'location'],
+                    properties: [
+                        new OA\Property(property: 'id',       type: 'integer'),
+                        new OA\Property(property: 'location', type: 'string'),
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Location updated', content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'status', type: 'integer'),
+                    new OA\Property(property: 'message', type: 'string'),
+                    new OA\Property(property: 'data', type: 'object')
+                ]
+            )),
+            new OA\Response(response: 400, description: 'Validation error', content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'status', type: 'integer'),
+                    new OA\Property(property: 'message', type: 'string'),
+                    new OA\Property(property: 'errors', type: 'object')
+                ]
+            )),
+            new OA\Response(response: 500, description: 'Validation error', content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'status', type: 'integer'),
+                    new OA\Property(property: 'message', type: 'string'),
+                ]
+            )),
+        ]
+    )]
     public function update_location()
     {
         $id = $this->request->getVar('id');
@@ -411,6 +561,41 @@ class Task extends BaseController
         ]);
     }
 
+    #[OA\Put(
+        path: '/admin/manage/task/edit/item',
+        summary: 'Update an item',
+        tags: ['Admin'],
+        // security: [['sessionAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/x-www-form-urlencoded',
+                schema: new OA\Schema(
+                    required: ['id', 'location_id', 'item'],
+                    properties: [
+                        new OA\Property(property: 'id',          type: 'integer'),
+                        new OA\Property(property: 'location_id', type: 'integer'),
+                        new OA\Property(property: 'item',        type: 'string'),
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Item updated', content: new OA\JsonContent(properties: [
+                new OA\Property(property: 'status', type: 'integer'),
+                new OA\Property(property: 'message', type: 'string'),
+            ])),
+            new OA\Response(response: 400, description: 'Validation error', content: new OA\JsonContent(properties: [
+                new OA\Property(property: 'status', type: 'integer'),
+                new OA\Property(property: 'message', type: 'string'),
+                new OA\Property(property: 'errors', type: 'object')
+            ])),
+            new OA\Response(response: 500, description: 'Server error', content: new OA\JsonContent(properties: [
+                new OA\Property(property: 'status', type: 'integer'),
+                new OA\Property(property: 'message', type: 'string'),
+            ])),
+        ]
+    )]
     public function update_item()
     {
         $id = $this->request->getVar('id');
@@ -447,6 +632,41 @@ class Task extends BaseController
         ]);
     }
 
+    #[OA\Put(
+        path: '/admin/manage/task/edit/action',
+        summary: 'Update an action',
+        tags: ['Admin'],
+        // security: [['sessionAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/x-www-form-urlencoded',
+                schema: new OA\Schema(
+                    required: ['id', 'item_id', 'aksi'],
+                    properties: [
+                        new OA\Property(property: 'id', type: 'integer'),
+                        new OA\Property(property: 'item_id', type: 'integer'),
+                        new OA\Property(property: 'aksi', type: 'string'),
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Action updated', content: new OA\JsonContent(properties: [
+                new OA\Property(property: 'status', type: 'integer'),
+                new OA\Property(property: 'message', type: 'string'),
+            ])),
+            new OA\Response(response: 400, description: 'Validation error', content: new OA\JsonContent(properties: [
+                new OA\Property(property: 'status', type: 'integer'),
+                new OA\Property(property: 'message', type: 'string'),
+                new OA\Property(property: 'errors', type: 'object')
+            ])),
+            new OA\Response(response: 500, description: 'Server error', content: new OA\JsonContent(properties: [
+                new OA\Property(property: 'status', type: 'integer'),
+                new OA\Property(property: 'message', type: 'string'),
+            ])),
+        ]
+    )]
     public function update_action()
     {
         $id = $this->request->getVar('id');
@@ -483,6 +703,29 @@ class Task extends BaseController
         ]);
     }
 
+    #[OA\Delete(
+        path: '/admin/manage/task/delete/location',
+        summary: 'Delete a location',
+        tags: ['Admin'],
+        // security: [['sessionAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/x-www-form-urlencoded',
+                schema: new OA\Schema(required: ['id'], properties: [new OA\Property(property: 'id', type: 'integer')])
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Location deleted', content: new OA\JsonContent(properties: [
+                new OA\Property(property: 'status', type: 'integer'),
+                new OA\Property(property: 'message', type: 'string'),
+            ])),
+            new OA\Response(response: 404, description: 'Not found', content: new OA\JsonContent(properties: [
+                new OA\Property(property: 'status', type: 'integer'),
+                new OA\Property(property: 'message', type: 'string'),
+            ])),
+        ]
+    )]
     public function delete_location()
     {
         $id = $this->request->getVar('id');
@@ -509,6 +752,33 @@ class Task extends BaseController
         ]);
     }
 
+    #[OA\Delete(
+        path: '/admin/manage/task/delete/item',
+        summary: 'Delete an item',
+        tags: ['Admin'],
+        // security: [['sessionAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/x-www-form-urlencoded',
+                schema: new OA\Schema(required: ['id'], properties: [new OA\Property(property: 'id', type: 'integer')])
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Item deleted', content: new OA\JsonContent(properties: [
+                new OA\Property(property: 'status', type: 'integer'),
+                new OA\Property(property: 'message', type: 'string'),
+            ])),
+            new OA\Response(response: 404, description: 'Not found', content: new OA\JsonContent(properties: [
+                new OA\Property(property: 'status', type: 'integer'),
+                new OA\Property(property: 'message', type: 'string'),
+            ])),
+            new OA\Response(response: 500, description: 'Not found', content: new OA\JsonContent(properties: [
+                new OA\Property(property: 'status', type: 'integer'),
+                new OA\Property(property: 'message', type: 'string'),
+            ])),
+        ]
+    )]
     public function delete_item()
     {
         $id = $this->request->getVar('id');
@@ -535,6 +805,33 @@ class Task extends BaseController
         ]);
     }
 
+    #[OA\Delete(
+        path: '/admin/manage/task/delete/action',
+        summary: 'Delete an action',
+        tags: ['Admin'],
+        // security: [['sessionAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/x-www-form-urlencoded',
+                schema: new OA\Schema(required: ['id'], properties: [new OA\Property(property: 'id', type: 'integer')])
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Item deleted', content: new OA\JsonContent(properties: [
+                new OA\Property(property: 'status', type: 'integer'),
+                new OA\Property(property: 'message', type: 'string'),
+            ])),
+            new OA\Response(response: 404, description: 'Not found', content: new OA\JsonContent(properties: [
+                new OA\Property(property: 'status', type: 'integer'),
+                new OA\Property(property: 'message', type: 'string'),
+            ])),
+            new OA\Response(response: 500, description: 'Not found', content: new OA\JsonContent(properties: [
+                new OA\Property(property: 'status', type: 'integer'),
+                new OA\Property(property: 'message', type: 'string'),
+            ])),
+        ]
+    )]
     public function delete_action()
     {
         $id = $this->request->getVar('id');

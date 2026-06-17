@@ -6,6 +6,9 @@ use CodeIgniter\Router\RouteCollection;
  * @var RouteCollection $routes
  */
 
+// ── API Documentation (public, no auth required) ─────────────────────────────
+$routes->get('api/docs', 'SwaggerController::ui');
+$routes->get('api/docs/json', 'SwaggerController::json');
 
 // Authentication Routes
 $routes->group("auth", static function (RouteCollection $routes) {
@@ -66,10 +69,8 @@ $routes->group('admin', static function (RouteCollection $routes) {
             $routes->delete('delete/item', 'Admin\Task::delete_item');
             $routes->delete('delete/action', 'Admin\Task::delete_action');
         });
-
     });
 });
-
 
 $routes->group("operator", static function (RouteCollection $routes) {
     $routes->get('/', 'Operator::index');

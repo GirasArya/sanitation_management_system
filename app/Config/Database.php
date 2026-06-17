@@ -25,29 +25,30 @@ class Database extends Config
      * @var array<string, mixed>
      */
     public array $default = [
-        'DSN' => '',
-        'hostname' => 'localhost',
-        'username' => '',
-        'password' => '',
-        'database' => '',
-        'DBDriver' => 'MySQLi',
-        'DBPrefix' => '',
-        'pConnect' => false,
-        'DBDebug' => true,
-        'charset' => 'utf8mb4',
-        'DBCollat' => 'utf8mb4_general_ci',
-        'swapPre' => '',
-        'encrypt' => false,
-        'compress' => false,
-        'strictOn' => false,
-        'failover' => [],
-        'port' => 3306,
+        'DSN'          => '',
+        'hostname'     => 'localhost',
+        'username'     => '',
+        'password'     => '',
+        'database'     => '',
+        'schema'       => 'public',
+        'DBDriver'     => 'MySQLi',
+        'DBPrefix'     => '',
+        'pConnect'     => false,
+        'DBDebug'      => true,
+        'charset'      => 'utf8mb4',
+        'DBCollat'     => 'utf8mb4_general_ci',
+        'swapPre'      => '',
+        'encrypt'      => false,
+        'compress'     => false,
+        'strictOn'     => false,
+        'failover'     => [],
+        'port'         => 3306,
         'numberNative' => false,
-        'foundRows' => false,
-        'dateFormat' => [
-            'date' => 'Y-m-d',
+        'foundRows'    => false,
+        'dateFormat'   => [
+            'date'     => 'Y-m-d',
             'datetime' => 'Y-m-d H:i:s',
-            'time' => 'H:i:s',
+            'time'     => 'H:i:s',
         ],
     ];
 
@@ -198,8 +199,9 @@ class Database extends Config
         $this->default['username'] = (string) (getenv('DB_USER') ?: (env('database.default.username') ?: $this->default['username']));
         $this->default['password'] = (string) (getenv('DB_PASS') ?: (env('database.default.password') ?: $this->default['password']));
         $this->default['database'] = (string) (getenv('DB_NAME') ?: (env('database.default.database') ?: $this->default['database']));
+        $this->default['schema']   = (string) (getenv('DB_SCHEMA') ?: (env('database.default.schema') ?: $this->default['schema']));
         $this->default['DBDriver'] = (string) (getenv('DB_DRIVER') ?: (env('database.default.DBDriver') ?: $this->default['DBDriver']));
-        $this->default['port'] = (int) (getenv('DB_PORT') ?: (env('database.default.port') ?: $this->default['port']));
+        $this->default['port']     = (int) (getenv('DB_PORT') ?: (env('database.default.port') ?: $this->default['port']));
 
         $driver = strtolower((string) ($this->default['DBDriver'] ?? ''));
 

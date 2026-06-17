@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\UserModel;
+use OpenApi\Attributes as OA;
 
 class Profile extends BaseController
 {
@@ -34,6 +35,52 @@ class Profile extends BaseController
         return view('profile/vw_profile', $sent_data);
     }
 
+    #[OA\Put(
+        path: '/profile/update_info',
+        summary: 'Update profile name and username',
+        tags: ['Profile'],
+        security: [['sessionAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/x-www-form-urlencoded',
+                schema: new OA\Schema(
+                    required: ['name', 'username'],
+                    properties: [
+                        new OA\Property(property: 'name',     type: 'string', example: 'Giras Arya'),
+                        new OA\Property(property: 'username', type: 'string', example: 'Giras'),
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Profile updated', content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'status', type: 'integer', example: 200),
+                    new OA\Property(property: 'message', type: 'string', example: 'Profile updated successfully'),
+                ]
+            )),
+            new OA\Response(response: 400, description: 'Validation error', content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'status', type: 'integer', example: 400),
+                    new OA\Property(property: 'message', type: 'string', example: 'Validation error'),
+                    new OA\Property(property: 'errors', type: 'object', example: ['name' => 'Name is required']),
+                ]
+            )),
+            new OA\Response(response: 401, description: 'Unauthorized', content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'status', type: 'integer', example: 401),
+                    new OA\Property(property: 'message', type: 'string', example: 'Unauthorized'),
+                ]
+            )),
+            new OA\Response(response: 500, description: 'Database error', content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'status', type: 'integer', example: 500),
+                    new OA\Property(property: 'message', type: 'string', example: 'Gagal memperbarui profil'),
+                ]
+            )),
+        ]
+    )]
     public function update_info()
     {
         if (!session()->has('jwt')) {
@@ -102,6 +149,28 @@ class Profile extends BaseController
         ]);
     }
 
+    #[OA\Post(
+        path: '/profile/update_photo',
+        summary: 'Upload a new profile photo',
+        description: 'Accepts JPG or PNG image (max 2 MB). Crops to a 300×300 square and saves as JPEG.',
+        tags: ['Profile'],
+        security: [['sessionAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'multipart/form-data',
+                schema: new OA\Schema(
+                    required: ['photo'],
+                    properties: [new OA\Property(property: 'photo', type: 'string', format: 'binary')]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Photo saved', content: new OA\JsonContent(properties: [new OA\Property(property: 'status', type: 'integer'), new OA\Property(property: 'photo_url', type: 'string')])),
+            new OA\Response(response: 400, description: 'Invalid file'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+        ]
+    )]
     public function update_photo()
     {
         if (!session()->has('jwt')) {
@@ -206,6 +275,47 @@ class Profile extends BaseController
         ]);
     }
 
+    #[OA\Put(
+        path: '/profile/update_password',
+        summary: 'Change password',
+        tags: ['Profile'],
+        security: [['sessionAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/x-www-form-urlencoded',
+                schema: new OA\Schema(
+                    required: ['current_password', 'new_password', 'confirm_password'],
+                    properties: [
+                        new OA\Property(property: 'current_password',  type: 'string', format: 'password'),
+                        new OA\Property(property: 'new_password',      type: 'string', format: 'password'),
+                        new OA\Property(property: 'confirm_password',  type: 'string', format: 'password'),
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Password updated', content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'status', type: 'integer', example: 200),
+                    new OA\Property(property: 'message', type: 'string', example: 'Password updated successfully'),
+                ]
+            )),
+            new OA\Response(response: 400, description: 'Wrong current password or validation error', content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'status', type: 'integer', example: 400),
+                    new OA\Property(property: 'message', type: 'string', example: 'Wrong current password or validation error'),
+                    new OA\Property(property: 'errors', type: 'object', example: ['new_password' => 'Password must be at least 6 characters']),
+                ]
+            )),
+            new OA\Response(response: 401, description: 'Unauthorized', content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'status', type: 'integer', example: 401),
+                    new OA\Property(property: 'message', type: 'string', example: 'Unauthorized'),
+                ]
+            )),
+        ]
+    )]
     public function update_password()
     {
         if (!session()->has('jwt')) {

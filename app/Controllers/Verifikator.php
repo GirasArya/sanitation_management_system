@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use App\Models\TaskSubmissionModel;
+use OpenApi\Attributes as OA;
 
 class Verifikator extends BaseController
 {
@@ -61,6 +62,39 @@ class Verifikator extends BaseController
         return view('verifikator/vw_rekapitulasi', $sent_data);
     }
 
+    #[OA\Post(
+        path: '/verifikator/get_datatable',
+        summary: 'Task submission DataTable',
+        description: 'Paginated, filtered task submission list for the verifikator view.',
+        tags: ['Verifikator'],
+        security: [['sessionAuth' => []]],
+        requestBody: new OA\RequestBody(
+            content: new OA\MediaType(
+                mediaType: 'application/x-www-form-urlencoded',
+                schema: new OA\Schema(
+                    properties: [
+                        new OA\Property(property: 'draw',        type: 'integer'),
+                        new OA\Property(property: 'start',       type: 'integer'),
+                        new OA\Property(property: 'length',      type: 'integer'),
+                        new OA\Property(property: 'location_id', type: 'string', example: '0'),
+                        new OA\Property(property: 'date',        type: 'string', example: '0'),
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'DataTable JSON',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'integer', example: 200),
+                        new OA\Property(property: 'data', type: 'object', items: new OA\Items(ref: '#/components/schemas/TaskSubmission'))
+                    ]
+                )
+            )
+        ]
+    )]
     public function get_datatable()
     {
         $taskSubmissionModel = new TaskSubmissionModel();
@@ -97,9 +131,36 @@ class Verifikator extends BaseController
 
         $result = $taskSubmissionModel->getSubmittedTasks($data);
 
-        return $this->response->setJSON($result);
+        return $this->response->setJSON([
+            "status" => 200,
+            "data" => $result
+        ]);
     }
 
+    #[OA\Post(
+        path: '/verifikator/get_locations',
+        summary: 'Get submitted locations for a given date',
+        tags: ['Verifikator'],
+        security: [['sessionAuth' => []]],
+        requestBody: new OA\RequestBody(
+            content: new OA\MediaType(
+                mediaType: 'application/x-www-form-urlencoded',
+                schema: new OA\Schema(
+                    properties: [
+                        new OA\Property(property: 'date',        type: 'string', example: '0'),
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Array of locations', content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'success', type: 'boolean', example: true),
+                    new OA\Property(property: 'data', type: 'object', items: new OA\Items(ref: '#/components/schemas/Location'))
+                ]
+            ))
+        ]
+    )]
     public function get_locations()
     {
         $taskSubmissionModel = new TaskSubmissionModel();
@@ -112,6 +173,30 @@ class Verifikator extends BaseController
         ]);
     }
 
+    #[OA\Post(
+        path: '/verifikator/get_dates',
+        summary: 'Get submitted dates for a given location',
+        tags: ['Verifikator'],
+        // security: [['sessionAuth' => []]],
+        requestBody: new OA\RequestBody(
+            content: new OA\MediaType(
+                mediaType: 'application/x-www-form-urlencoded',
+                schema: new OA\Schema(
+                    properties: [
+                        new OA\Property(property: 'location_id', type: 'string', example: '0'),
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Array of dates', content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'success', type: 'boolean', example: true),
+                    new OA\Property(property: 'data', type: 'object', items: new OA\Items(type: 'string'))
+                ]
+            ))
+        ]
+    )]
     public function get_dates()
     {
         $taskSubmissionModel = new TaskSubmissionModel();
@@ -124,10 +209,19 @@ class Verifikator extends BaseController
         ]);
     }
 
-    public function get_submitted_task()
-    {
-        // return $this->
-    }
+    // #[OA\Get(
+    //     path: '/verifikator/get_submitted_task',
+    //     summary: 'Get submitted task',
+    //     tags: ['Verifikator'],
+    //     security: [['sessionAuth' => []]],
+    //     responses: [
+    //         new OA\Response(response: 200, description: 'Submitted task data')
+    //     ]
+    // )]
+    // public function get_submitted_task()
+    // {
+    //     // return $this->
+    // }
 
     public function rekapitulasi()
     {
@@ -147,6 +241,26 @@ class Verifikator extends BaseController
         return view('verifikator/vw_dashboard', $sent_data);
     }
 
+    #[OA\Get(
+        path: '/verifikator/laporan/rekapitulasi/summary',
+        summary: 'Get rekapitulasi summary counts',
+        description: 'Returns counts of pending, revisi, and verified submissions.',
+        tags: ['Verifikator'],
+        security: [['sessionAuth' => []]],
+        responses: [
+            new OA\Response(response: 200, description: 'Summary counts', content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'success', type: 'boolean'),
+                    new OA\Property(property: 'data',    type: 'object', properties: [
+                        new OA\Property(property: 'pending',  type: 'integer'),
+                        new OA\Property(property: 'revisi',   type: 'integer'),
+                        new OA\Property(property: 'verified', type: 'integer'),
+                    ])
+                ]
+            )),
+            new OA\Response(response: 401, description: 'Unauthorized', content: new OA\JsonContent(ref: '#/components/schemas/UnauthorizedResponse')),
+        ]
+    )]
     public function get_rekapitulasi_summary()
     {
         if (!session()->has('jwt')) {
@@ -202,6 +316,22 @@ class Verifikator extends BaseController
         ]);
     }
 
+    #[OA\Get(
+        path: '/verifikator/export',
+        summary: 'Export task submissions',
+        description: 'Download filtered task submissions as Excel (default) or PDF.',
+        tags: ['Verifikator'],
+        security: [['sessionAuth' => []]],
+        parameters: [
+            new OA\Parameter(name: 'format',      in: 'query', schema: new OA\Schema(type: 'string',  enum: ['excel', 'pdf']), example: 'excel'),
+            new OA\Parameter(name: 'location_id', in: 'query', schema: new OA\Schema(type: 'string'),  example: '0'),
+            new OA\Parameter(name: 'date',        in: 'query', schema: new OA\Schema(type: 'string'),  example: '0'),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'File download (xlsx or html/pdf)'),
+            new OA\Response(response: 302, description: 'Redirect to login if unauthenticated'),
+        ]
+    )]
     public function export_filtered()
     {
         if (!session()->has('jwt')) {
@@ -352,6 +482,7 @@ class Verifikator extends BaseController
         $count   = count($rows);
 
         $html = <<<HTML
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -407,6 +538,46 @@ HTML;
             ->setBody($html);
     }
 
+    #[OA\Post(
+        path: '/verifikator/verify_all',
+        summary: 'Verify all pending tasks',
+        description: 'Marks all pending submissions matching current filters as verified.',
+        tags: ['Verifikator'],
+        security: [['sessionAuth' => []]],
+        requestBody: new OA\RequestBody(
+            content: new OA\MediaType(
+                mediaType: 'application/x-www-form-urlencoded',
+                schema: new OA\Schema(properties: [
+                    new OA\Property(property: 'location_id', type: 'string', example: '0'),
+                    new OA\Property(property: 'date',        type: 'string', example: '0'),
+                    new OA\Property(property: 'search',      type: 'string', example: ''),
+                ])
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Verification count',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'integer', example: 200),
+                        new OA\Property(property: 'message', type: 'string', example: 'Verified 5 data'),
+                        new OA\Property(property: 'updated_count', type: 'integer', example: 5),
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthorized',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'integer', example: 401),
+                        new OA\Property(property: 'message', type: 'string', example: 'Unauthorized'),
+                    ]
+                )
+            ),
+        ]
+    )]
     public function verify_all()
     {
         $jwt = session()->get('jwt');
@@ -443,18 +614,70 @@ HTML;
         ]);
     }
 
+    #[OA\Post(
+        path: '/verifikator/modal',
+        summary: 'Get task detail for modal',
+        description: 'Returns full task submission details including location, item, actions, and revision info.',
+        tags: ['Verifikator'],
+        // security: [['sessionAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'application/x-www-form-urlencoded',
+                schema: new OA\Schema(required: ['id'], properties: [new OA\Property(property: 'id', type: 'integer')])
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Task detail JSON',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'integer', example: 200),
+                        new OA\Property(property: 'data', type: 'object', items: new OA\Items(ref: '#/components/schemas/TaskSubmission')),
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 422,
+                description: 'Empty Task ID',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'integer', example: 422),
+                        new OA\Property(property: 'message', type: 'string', example: 'Task ID is required'),
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Task not found',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'integer', example: 404),
+                        new OA\Property(property: 'message', type: 'string', example: 'Task not found'),
+                    ]
+                )
+            ),
+        ]
+    )]
     public function modal()
     {
         $id = $this->request->getPost('id');
         if (!$id) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Task id is required']);
+            return $this->response->setStatusCode(422)->setJSON([
+                'status' => 422,
+                'message' => 'Task id is required',
+            ]);
         }
 
         $taskSubmissionModel = new TaskSubmissionModel();
         $task = $taskSubmissionModel->find($id);
 
         if (!$task) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Task not found']);
+            return $this->response->setStatusCode(404)->setJSON([
+                'status' => 404,
+                'message' => 'Task not found',
+            ]);
         }
 
         // Get full details with joins
@@ -536,9 +759,42 @@ HTML;
             $taskDetails['revision_image_path'] = $task['revision_image_path'];
         }
 
-        return $this->response->setJSON(['success' => true, 'data' => $taskDetails]);
+        return $this->response->setStatusCode(200)->setJSON([
+            'status' => 200,
+            'success' => true,
+            'data' => $taskDetails
+        ]);
     }
 
+    #[OA\Post(
+        path: '/verifikator/update',
+        summary: 'Verify or request revision on a task',
+        description: 'Set task status to `verified` or `revised`. For revision, optionally attach an image.',
+        tags: ['Verifikator'],
+        security: [['sessionAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'multipart/form-data',
+                schema: new OA\Schema(
+                    required: ['id', 'action'],
+                    properties: [
+                        new OA\Property(property: 'id',                 type: 'integer'),
+                        new OA\Property(property: 'action',             type: 'string', enum: ['verifikasi', 'revisi']),
+                        new OA\Property(property: 'revise_description', type: 'string'),
+                        new OA\Property(property: 'revise_image',       type: 'string', format: 'binary'),
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Status updated'),
+            new OA\Response(response: 400, description: 'Invalid action or image'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+            new OA\Response(response: 404, description: 'Task not found'),
+            new OA\Response(response: 500, description: 'Database error'),
+        ]
+    )]
     public function update()
     {
         $id = $this->request->getPost('id');
