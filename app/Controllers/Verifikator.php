@@ -92,12 +92,29 @@ class Verifikator extends BaseController
                         new OA\Property(property: 'data', type: 'object', items: new OA\Items(ref: '#/components/schemas/TaskSubmission'))
                     ]
                 )
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'No Active Session',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'integer', example: 401),
+                        new OA\Property(property: 'error', type: 'string', example: 'No active session')
+                    ]
+                )
             )
         ]
     )]
     public function get_datatable()
     {
         $taskSubmissionModel = new TaskSubmissionModel();
+
+        if (!session()->has('jwt')) {
+            return $this->response->setStatusCode(401)->setJSON([
+                'status'  => 401,
+                'error' => 'No active session'
+            ]);
+        }
 
         $data = [
             'draw' => (int) ($this->request->getPost('draw') ?? 0),

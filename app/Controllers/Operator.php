@@ -42,6 +42,10 @@ class Operator extends BaseController
         $today = date('Y-m-d');
         $hasUniqueCodeColumn = false;
 
+        if (!session()->has('jwt')) {
+            return redirect()->to('auth/login');
+        }
+
         try {
             $hasUniqueCodeColumn = $db->fieldExists('unique_code', 'r_task_submission');
         } catch (\Throwable $e) {
@@ -91,6 +95,10 @@ class Operator extends BaseController
      */
     public function scan($location_id = null)
     {
+        if (!session()->has('jwt')) {
+            return redirect()->to('auth/login');
+        }
+
         if (!$location_id) {
             return redirect()->to('operator')->with('error', 'Location tidak ditemukan');
         }
@@ -137,6 +145,10 @@ class Operator extends BaseController
      */
     public function modal()
     {
+        if (!session()->has('jwt')) {
+            return redirect()->to('auth/login');
+        }
+
         $id = $this->request->getVar('id');
         $location_id = $this->request->getVar('location_id');
         $type = $this->request->getVar('type');
@@ -216,12 +228,25 @@ class Operator extends BaseController
                     new OA\Property(property: 'message', type: 'string')
                 ]
             )),
+            new OA\Response(response: 401, description: 'No active session', content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'status', type: 'integer'),
+                    new OA\Property(property: 'error', type: 'string')
+                ]
+            )),
         ]
     )]
     public function add_submission()
     {
         $user_id = $this->request->getVar('user_id');
         $submissions_json = $this->request->getVar('submissions');
+
+        if (!session()->has('jwt')) {
+            return $this->response->setStatusCode(401)->setJSON([
+                'status' => 401,
+                'error' => 'No active session'
+            ]);
+        }
 
         if (!$user_id) {
             return $this->response->setStatusCode(400)->setJSON(['status' => 400, 'message' => 'User ID tidak valid']);
@@ -404,10 +429,22 @@ class Operator extends BaseController
                     new OA\Property(property: 'error', type: 'string', example: 'Invalid action_id')
                 ]
             )),
+            new OA\Response(response: 401, description: 'No active session', content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'error', type: 'string', example: 'No Active Session')
+                ]
+            )),
         ]
     )]
     public function cancel_submission($action_id)
     {
+        if (!session()->has('jwt')) {
+            return $this->response->setStatusCode(401)->setJSON([
+                'status' => 401,
+                'error' => 'No active session'
+            ]);
+        }
+
         if (!$action_id) {
             return $this->response->setStatusCode(400)->setJSON(['error' => 'Invalid action_id']);
         }
@@ -428,6 +465,10 @@ class Operator extends BaseController
      */
     public function revisi()
     {
+        if (!session()->has('jwt')) {
+            return redirect()->to('auth/login');
+        }
+
         $user = $this->jwt->decode(session()->get('jwt'));
 
         // Get submissions that need revision with optimized query

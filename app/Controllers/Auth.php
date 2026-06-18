@@ -12,7 +12,7 @@ use OpenApi\Attributes as OA;
 class Auth extends BaseController
 {
     // Returns View - index
-    public function login()
+    public function index()
     {
         if (session()->has('jwt')) {
             try {

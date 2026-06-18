@@ -13,7 +13,7 @@ $routes->get('api/docs/json', 'SwaggerController::json');
 // Authentication Routes
 $routes->group("auth", static function (RouteCollection $routes) {
     // GET
-    $routes->get('login', 'Auth::login');
+    $routes->get('login', 'Auth::index');
     $routes->get('logout', 'Auth::logout');
     // POST
     $routes->post('login', 'Auth::login_handler');
@@ -22,7 +22,7 @@ $routes->group("auth", static function (RouteCollection $routes) {
 });
 
 // Admin Routes
-$routes->group('admin', static function (RouteCollection $routes) {
+$routes->group('admin', ['filter' => 'auth'], static function (RouteCollection $routes) {
     $routes->get('/', 'Admin\Dashboard::index');
     $routes->get('get_stats', 'Admin\Dashboard::get_stats');
     $routes->get('get_room_visits', 'Admin\Dashboard::get_room_visits');
@@ -72,7 +72,7 @@ $routes->group('admin', static function (RouteCollection $routes) {
     });
 });
 
-$routes->group("operator", static function (RouteCollection $routes) {
+$routes->group("operator", ['filter' => 'auth'], static function (RouteCollection $routes) {
     $routes->get('/', 'Operator::index');
     $routes->get('scan/(:num)', 'Operator::scan/$1');
     $routes->get('revisi', 'Operator::revisi');
@@ -82,7 +82,7 @@ $routes->group("operator", static function (RouteCollection $routes) {
     $routes->delete('cancel/(:num)', 'Operator::cancel_submission/$1');
 });
 
-$routes->group("verifikator", static function (RouteCollection $routes) {
+$routes->group("verifikator", ['filter' => 'auth'], static function (RouteCollection $routes) {
     // GET
     $routes->get('/', 'Verifikator::index');
     // POST
@@ -102,7 +102,7 @@ $routes->group("verifikator", static function (RouteCollection $routes) {
 });
 
 // Profile Routes (all roles)
-$routes->group('profile', static function (RouteCollection $routes) {
+$routes->group('profile', ['filter' => 'auth'], static function (RouteCollection $routes) {
     $routes->get('/', 'Profile::index');
     $routes->put('update_info', 'Profile::update_info');
     $routes->put('update_password', 'Profile::update_password');

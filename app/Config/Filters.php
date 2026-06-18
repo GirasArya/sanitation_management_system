@@ -2,7 +2,7 @@
 
 namespace Config;
 
-use App\Filters\LoginState;
+use App\Filters\AuthMiddleware;
 use App\Filters\MyCors;
 use CodeIgniter\Config\Filters as BaseFilters;
 use CodeIgniter\Filters\Cors;
@@ -36,7 +36,8 @@ class Filters extends BaseFilters
         'forcehttps' => ForceHTTPS::class,
         'pagecache' => PageCache::class,
         'performance' => PerformanceMetrics::class,
-        'mycors' => MyCors::class
+        'mycors' => MyCors::class,
+        'auth'   => AuthMiddleware::class,
     ];
 
     /**
