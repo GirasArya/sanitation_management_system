@@ -35,7 +35,7 @@ The repository also includes a GitHub Actions workflow at [.github/workflows/doc
 
 ```bash
 cp env .env   # adjust DB_PASS and APP_BASE_URL
-docker compose up -d --build
+docker compose up -d
 ```
 
 ## Local Development (without Docker)

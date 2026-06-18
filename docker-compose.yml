@@ -82,7 +82,6 @@ services:
 
 volumes:
   db_data:
-    name: "my-app-data"
   app_writable:
   redis_data:
   public_uploads:

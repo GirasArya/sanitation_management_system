@@ -10,13 +10,13 @@ FROM php:8.4-apache-bookworm
 # System dependencies – install only what the original Dockerfile needs
 # -----------------------------------------------------------------
 RUN apt-get update && apt-get install -y \
-        libpq-dev libicu-dev libzip-dev \
-        libpng-dev libfreetype6-dev libjpeg62-turbo-dev \
-        libonig-dev libxml2-dev \
+    libpq-dev libicu-dev libzip-dev \
+    libpng-dev libfreetype6-dev libjpeg62-turbo-dev \
+    libonig-dev libxml2-dev \
     && docker-php-ext-configure intl \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
-        pdo_pgsql pgsql mysqli pdo_mysql gd intl mbstring zip opcache \
+    pdo_pgsql pgsql mysqli pdo_mysql gd intl mbstring zip opcache \
     && pecl install redis && docker-php-ext-enable redis \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -71,4 +71,4 @@ COPY docker/entrypoint.sh /entrypoint.sh
 RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 
 EXPOSE 80
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["./entrypoint.sh"]

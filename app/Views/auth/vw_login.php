@@ -231,12 +231,12 @@ Login Page
     </div>
 
     <!-- Error Alert -->
-    <?php if (session()->has('error')): ?>
+    <?php if (session()->getFlashdata('error')): ?>
         <div class="alert alert-danger" role="alert">
             <div class="d-flex align-items-center">
                 <iconify-icon icon="zondicons:exclamation-solid" width="24" height="24" class="me-3"></iconify-icon>
                 <div>
-                    <strong><?= session()->get('error') ?></strong>
+                    <strong><?= session()->getFlashdata('error') ?></strong>
                 </div>
             </div>
         </div>
@@ -254,7 +254,7 @@ Login Page
             </label>
             <input
                 type="text"
-                class="form-control <?= (session()->has('errors') && isset(session()->get('errors')['username'])) ? 'is-invalid' : '' ?>"
+                class="form-control <?= (session()->getFlashdata('errors') && isset(session()->getFlashdata('errors')['username'])) ? 'is-invalid' : '' ?>"
                 id="username"
                 name="username"
                 value="<?= old('username') ?>"
@@ -262,9 +262,9 @@ Login Page
                 autocomplete="username"
                 autofocus
                 required>
-            <?php if (session()->has('errors') && isset(session()->get('errors')['username'])): ?>
+            <?php if (session()->getFlashdata('errors') && isset(session()->getFlashdata('errors')['username'])): ?>
                         <div class="invalid-feedback">
-                        <?= session()->get('errors')['username']; ?>
+                        <?= session()->getFlashdata('errors')['username']; ?>
                     </div>
                     <?php endif; ?>
                     </div>
@@ -276,15 +276,15 @@ Login Page
             </label>
             <input
                 type="password"
-                class="form-control <?= (session()->has('errors') && isset(session()->get('errors')['password'])) ? 'is-invalid' : '' ?>"
+                class="form-control <?= (session()->getFlashdata('errors') && isset(session()->getFlashdata('errors')['password'])) ? 'is-invalid' : '' ?>"
                 id="password"
                 name="password"
                 placeholder="Enter your password"
                 autocomplete="current-password"
                 required>
-            <?php if (session()->has('errors') && isset(session()->get('errors')['password'])): ?>
+            <?php if (session()->getFlashdata('errors') && isset(session()->getFlashdata('errors')['password'])): ?>
                         <div class="invalid-feedback">
-                        <?= session()->get('errors')['password']; ?>
+                        <?= session()->getFlashdata('errors')['password']; ?>
                     </div>
                     <?php endif; ?>
                     </div>
